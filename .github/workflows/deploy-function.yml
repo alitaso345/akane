@@ -1,0 +1,20 @@
+on:
+  push:
+    branches:
+      - master
+name: deploy to cloud function
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Deploy a Cloud Function
+        id: deploy-function
+        uses: google-github-actions/deploy-cloud-functions@v0.1.0
+        with:
+          name: akane-function
+          runtime: go113
+          project: ${{ secrets.gcp_project }}
+          credentials: ${{ secrets.gcp_credentials }}
