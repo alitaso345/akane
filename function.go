@@ -23,7 +23,7 @@ func containNoticeText(text string) bool {
 }
 
 func HTTPFunction(w http.ResponseWriter, r *http.Request) {
-	if os.Getenv("ENV_PRODUCTION") != "production" {
+	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
 			log.Fatal("Error loading .env file")
