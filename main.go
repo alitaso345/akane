@@ -13,7 +13,7 @@ import (
 func containNoticeText(text string) bool {
 	keywords := []string{"配信", "時から", "分から", "showroom", "youtube", "live", "放送開始", "ニコニコ", "視聴", "ラジオ", "放送"}
 	for _, k := range keywords {
-		if strings.Contains(text, k) {
+		if strings.Contains(strings.ToLower(text), k) {
 			return true
 		}
 	}
