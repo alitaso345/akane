@@ -18,3 +18,4 @@ jobs:
           runtime: go113
           project: ${{ secrets.gcp_project }}
           credentials: ${{ secrets.gcp_credentials }}
+          entry_point: HTTPFunction
