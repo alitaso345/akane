@@ -89,17 +89,16 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	channelSecret := os.Getenv("CHANNEL_SECRET")
 	channelAccessToken := os.Getenv("CHANNEL_ACCESS_TOKEN")
 
-	var opts option.ClientOption
-	if os.Getenv("ENV") != "production" {
-		opts = option.WithCredentialsFile("serviceAccount.json")
-	}
-
 	log.Println("AKANE: 1")
+	var app *firebase.App
 	ctx := context.Background()
-	app, err := firebase.NewApp(ctx, nil, opts)
-	if err != nil {
-		log.Fatal(err)
+	if os.Getenv("ENV") != "production" {
+		app, _ = firebase.NewApp(ctx, nil, option.WithCredentialsFile("serviceAccount.json"))
+	} else {
+		app, _ = firebase.NewApp(ctx, nil)
 	}
+	log.Println("AKANE: 1.5")
+
 	client, err := app.Firestore(ctx)
 	if err != nil {
 		log.Fatal(err)
