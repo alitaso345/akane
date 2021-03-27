@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"google.golang.org/api/iterator"
 
@@ -62,7 +63,7 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 			}
 			if resp.StatusCode == 200 {
 				for _, tweet := range tweets {
-					if containNoticeText(tweet.Text) {
+					if containNoticeText(tweet.Text) && isRecentTweet(tweet) {
 						text = text + "https://twitter.com/" + tweet.User.ScreenName + "/status/" + strconv.FormatInt(tweet.ID, 10) + "\n\n"
 
 					}
@@ -140,6 +141,9 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserIds() []string {
+	// デバッグ用
+	//return []string{os.Getenv("MY_USER_ID")}
+
 	var userIds []string
 
 	var app *firebase.App
@@ -209,4 +213,10 @@ func containNoticeText(text string) bool {
 		}
 	}
 	return false
+}
+
+func isRecentTweet(tweet twitter.Tweet) bool {
+	now := time.Now()
+	createdAt, _ := time.Parse(time.RubyDate, tweet.CreatedAt)
+	return int(now.Sub(createdAt).Hours())/24 == 0
 }
