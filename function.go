@@ -79,6 +79,7 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 }
 
 func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
+	log.Println("AKANE: webhook function")
 	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
@@ -93,6 +94,7 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 		opts = option.WithCredentialsFile("serviceAccount.json")
 	}
 
+	log.Println("AKANE: 1")
 	ctx := context.Background()
 	app, err := firebase.NewApp(ctx, nil, opts)
 	if err != nil {
@@ -104,6 +106,7 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	}
 	defer client.Close()
 
+	log.Println("AKANE: 2")
 	bot, err := linebot.New(channelSecret, channelAccessToken)
 	if err != nil {
 		log.Fatal(err)
@@ -121,17 +124,20 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 
 	for _, event := range events {
 		if event.Type == linebot.EventTypeFollow {
-			user := User{
-				LineId: event.Source.UserID,
-			}
-			_, err := client.Collection("users").Doc(event.Source.UserID).Set(ctx, user)
+			log.Println("AKANE: 3")
+			_, err := client.Collection("users").Doc(event.Source.UserID).Set(ctx, map[string]interface{}{
+				"lineId": event.Source.UserID,
+			})
 			if err != nil {
 				log.Fatalf("Failed adding alovelace: %v", err)
 			}
 		}
 
 		if event.Type == linebot.EventTypeUnfollow {
-			_, err := client.Collection("users").Doc(event.Source.UserID).Delete(ctx)
+			log.Println("AKANE: 4")
+			doc := client.Collection("users").Doc(event.Source.UserID)
+			log.Printf("AKANE: doc %v", doc)
+			_, err := doc.Delete(ctx)
 			if err != nil {
 				log.Fatalf("An error has occurred: %s\", err", err)
 			}
