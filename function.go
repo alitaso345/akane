@@ -43,7 +43,7 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 	httpClient := config.Client(oauth1.NoContext, token)
 
 	client := twitter.NewClient(httpClient)
-	members, resp, err := client.Lists.Members(&twitter.ListsMembersParams{ListID: 1375104607026749440})
+	members, resp, err := client.Lists.Members(&twitter.ListsMembersParams{ListID: 1375784169129738240})
 	if err != nil {
 		log.Fatalf("Error getting members %v", err)
 	}
@@ -88,6 +88,22 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	channelSecret := os.Getenv("CHANNEL_SECRET")
 	channelAccessToken := os.Getenv("CHANNEL_ACCESS_TOKEN")
 
+	var opts option.ClientOption
+	if os.Getenv("ENV") != "production" {
+		opts = option.WithCredentialsFile("serviceAccount.json")
+	}
+
+	ctx := context.Background()
+	app, err := firebase.NewApp(ctx, nil, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client, err := app.Firestore(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
 	bot, err := linebot.New(channelSecret, channelAccessToken)
 	if err != nil {
 		log.Fatal(err)
@@ -103,16 +119,22 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Loading webhook function")
 	for _, event := range events {
 		if event.Type == linebot.EventTypeFollow {
-			log.Println("Follow event")
-			log.Println(event.Source.UserID)
+			user := User{
+				LineId: event.Source.UserID,
+			}
+			_, err := client.Collection("users").Doc(event.Source.UserID).Set(ctx, user)
+			if err != nil {
+				log.Fatalf("Failed adding alovelace: %v", err)
+			}
 		}
 
 		if event.Type == linebot.EventTypeUnfollow {
-			log.Println("Unfollow event")
-			log.Println(event.Source.UserID)
+			_, err := client.Collection("users").Doc(event.Source.UserID).Delete(ctx)
+			if err != nil {
+				log.Fatalf("An error has occurred: %s\", err", err)
+			}
 		}
 	}
 	fmt.Fprintf(w, "ok")
