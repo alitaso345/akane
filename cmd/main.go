@@ -14,6 +14,9 @@ func main() {
 	if err := funcframework.RegisterHTTPFunctionContext(ctx, "/", akane.HTTPFunction); err != nil {
 		log.Fatalf("funcframework.RegisterHTTPFunctionContext: %v\n", err)
 	}
+	if err := funcframework.RegisterHTTPFunctionContext(ctx, "/line", akane.SendLINE); err != nil {
+		log.Fatalf("funcframework.RegisterHTTPFunctionContext: %v\n", err)
+	}
 	// Use PORT environment variable, or default to 8080.
 	port := "8080"
 	if envPort := os.Getenv("PORT"); envPort != "" {

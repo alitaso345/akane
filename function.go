@@ -10,19 +10,10 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/joho/godotenv"
+	"github.com/line/line-bot-sdk-go/linebot"
 )
 
-func containNoticeText(text string) bool {
-	keywords := []string{"配信", "時から", "分から", "showroom", "youtube", "live", "放送開始", "ニコニコ", "視聴", "ラジオ", "放送"}
-	for _, k := range keywords {
-		if strings.Contains(strings.ToLower(text), k) {
-			return true
-		}
-	}
-	return false
-}
-
-func HTTPFunction(w http.ResponseWriter, r *http.Request) {
+func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
@@ -65,4 +56,76 @@ func HTTPFunction(w http.ResponseWriter, r *http.Request) {
 
 		}
 	}
+}
+
+func LineBotWebhookFunction(_w http.ResponseWriter, _r *http.Request) {
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
+	}
+	channelSecret := os.Getenv("CHANNEL_SECRET")
+	channelAccessToken := os.Getenv("CHANNEL_ACCESS_TOKEN")
+
+	bot, err := linebot.New(channelSecret, channelAccessToken)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	http.HandleFunc("/callback", func(w http.ResponseWriter, req *http.Request) {
+		events, err := bot.ParseRequest(req)
+		if err != nil {
+			if err == linebot.ErrInvalidSignature {
+				w.WriteHeader(400)
+			} else {
+				w.WriteHeader(500)
+			}
+			return
+		}
+
+		log.Println("Loading webhook function")
+		for _, event := range events {
+			if event.Type == linebot.EventTypeFollow {
+				log.Println(event.Source.UserID)
+			}
+		}
+	})
+}
+
+func SendLINE(_w http.ResponseWriter, _r *http.Request) {
+	fmt.Println("LINE BOT testing...")
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
+	}
+
+	channelSecret := os.Getenv("CHANNEL_SECRET")
+	channelAccessToken := os.Getenv("CHANNEL_ACCESS_TOKEN")
+	userId := os.Getenv("MY_USER_ID")
+
+	client := &http.Client{}
+	bot, err := linebot.New(channelSecret, channelAccessToken, linebot.WithHTTPClient(client))
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	var messages []linebot.SendingMessage
+	messages = append(messages, linebot.NewTextMessage("Hello"))
+	_, err = bot.PushMessage(userId, messages...).Do()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func containNoticeText(text string) bool {
+	keywords := []string{"配信", "時から", "分から", "showroom", "youtube", "live", "放送開始", "ニコニコ", "視聴", "ラジオ", "放送"}
+	for _, k := range keywords {
+		if strings.Contains(strings.ToLower(text), k) {
+			return true
+		}
+	}
+	return false
 }
