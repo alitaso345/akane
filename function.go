@@ -58,7 +58,7 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 	}
 }
 
-func LineBotWebhookFunction(_w http.ResponseWriter, _r *http.Request) {
+func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
@@ -73,24 +73,23 @@ func LineBotWebhookFunction(_w http.ResponseWriter, _r *http.Request) {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("/callback", func(w http.ResponseWriter, req *http.Request) {
-		events, err := bot.ParseRequest(req)
-		if err != nil {
-			if err == linebot.ErrInvalidSignature {
-				w.WriteHeader(400)
-			} else {
-				w.WriteHeader(500)
-			}
-			return
+	events, err := bot.ParseRequest(r)
+	if err != nil {
+		if err == linebot.ErrInvalidSignature {
+			w.WriteHeader(400)
+		} else {
+			w.WriteHeader(500)
 		}
+		return
+	}
 
-		log.Println("Loading webhook function")
-		for _, event := range events {
-			if event.Type == linebot.EventTypeFollow {
-				log.Println(event.Source.UserID)
-			}
+	log.Println("Loading webhook function")
+	for _, event := range events {
+		if event.Type == linebot.EventTypeFollow {
+			log.Println(event.Source.UserID)
 		}
-	})
+	}
+	fmt.Fprintf(w, "ok")
 }
 
 func SendLINE(_w http.ResponseWriter, _r *http.Request) {
