@@ -79,7 +79,6 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 }
 
 func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
-	log.Println("AKANE: webhook function")
 	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
@@ -89,7 +88,6 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	channelSecret := os.Getenv("CHANNEL_SECRET")
 	channelAccessToken := os.Getenv("CHANNEL_ACCESS_TOKEN")
 
-	log.Println("AKANE: 1")
 	var app *firebase.App
 	ctx := context.Background()
 	if os.Getenv("ENV") != "production" {
@@ -97,7 +95,6 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	} else {
 		app, _ = firebase.NewApp(ctx, nil)
 	}
-	log.Println("AKANE: 1.5")
 
 	client, err := app.Firestore(ctx)
 	if err != nil {
@@ -105,7 +102,6 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	}
 	defer client.Close()
 
-	log.Println("AKANE: 2")
 	bot, err := linebot.New(channelSecret, channelAccessToken)
 	if err != nil {
 		log.Fatal(err)
@@ -123,7 +119,6 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 
 	for _, event := range events {
 		if event.Type == linebot.EventTypeFollow {
-			log.Println("AKANE: 3")
 			_, err := client.Collection("users").Doc(event.Source.UserID).Set(ctx, map[string]interface{}{
 				"lineId": event.Source.UserID,
 			})
@@ -133,7 +128,6 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if event.Type == linebot.EventTypeUnfollow {
-			log.Println("AKANE: 4")
 			doc := client.Collection("users").Doc(event.Source.UserID)
 			log.Printf("AKANE: doc %v", doc)
 			_, err := doc.Delete(ctx)
