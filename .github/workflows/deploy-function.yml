@@ -2,7 +2,7 @@ on:
   push:
     branches:
       - master
-name: deploy to cloud function
+name: deploy twitter watcher
 jobs:
   build:
     runs-on: ubuntu-latest

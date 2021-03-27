@@ -1,17 +1,29 @@
 package akane
 
 import (
+	"context"
+	json2 "encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+
+	"google.golang.org/api/iterator"
+
+	firebase "firebase.google.com/go/v4"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/joho/godotenv"
 	"github.com/line/line-bot-sdk-go/linebot"
+	"google.golang.org/api/option"
 )
+
+type User struct {
+	LineId string `json:"lineId"`
+}
 
 func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 	if os.Getenv("ENV") != "production" {
@@ -35,6 +47,8 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 	if err != nil {
 		log.Fatalf("Error getting members %v", err)
 	}
+
+	var text string
 	if resp.StatusCode == 200 {
 		for _, user := range members.Users {
 			tweets, resp, err := client.Timelines.UserTimeline(&twitter.UserTimelineParams{
@@ -49,12 +63,18 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 			if resp.StatusCode == 200 {
 				for _, tweet := range tweets {
 					if containNoticeText(tweet.Text) {
-						fmt.Printf("https://twitter.com/%s/status/%d\n", tweet.User.ScreenName, tweet.ID)
+						text = text + "https://twitter.com/" + tweet.User.ScreenName + "/status/" + strconv.FormatInt(tweet.ID, 10) + "\n\n"
+
 					}
 				}
 			}
 
 		}
+	}
+
+	userIds := getUserIds()
+	for _, id := range userIds {
+		sendLineMessage(id, text)
 	}
 }
 
@@ -98,8 +118,46 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "ok")
 }
 
-func SendLINE(_w http.ResponseWriter, _r *http.Request) {
-	fmt.Println("LINE BOT testing...")
+func getUserIds() []string {
+	var userIds []string
+
+	var opts option.ClientOption
+	if os.Getenv("ENV") != "production" {
+		opts = option.WithCredentialsFile("serviceAccount.json")
+	}
+
+	ctx := context.Background()
+	app, err := firebase.NewApp(ctx, nil, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client, err := app.Firestore(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	iter := client.Collection("users").Documents(ctx)
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Failed to iterate: %v", err)
+		}
+		json, err := json2.Marshal(doc.Data())
+		if err != nil {
+			log.Fatalln(err)
+		}
+		var user User
+		json2.Unmarshal(json, &user)
+		userIds = append(userIds, user.LineId)
+	}
+	return userIds
+}
+
+func sendLineMessage(userId string, message string) {
 	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
@@ -109,7 +167,6 @@ func SendLINE(_w http.ResponseWriter, _r *http.Request) {
 
 	channelSecret := os.Getenv("CHANNEL_SECRET")
 	channelAccessToken := os.Getenv("CHANNEL_ACCESS_TOKEN")
-	userId := os.Getenv("MY_USER_ID")
 
 	client := &http.Client{}
 	bot, err := linebot.New(channelSecret, channelAccessToken, linebot.WithHTTPClient(client))
@@ -118,7 +175,7 @@ func SendLINE(_w http.ResponseWriter, _r *http.Request) {
 	}
 
 	var messages []linebot.SendingMessage
-	messages = append(messages, linebot.NewTextMessage("Hello"))
+	messages = append(messages, linebot.NewTextMessage(message))
 	_, err = bot.PushMessage(userId, messages...).Do()
 	if err != nil {
 		log.Fatal(err)
