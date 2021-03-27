@@ -142,16 +142,14 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 func getUserIds() []string {
 	var userIds []string
 
-	var opts option.ClientOption
+	var app *firebase.App
+	ctx := context.Background()
 	if os.Getenv("ENV") != "production" {
-		opts = option.WithCredentialsFile("serviceAccount.json")
+		app, _ = firebase.NewApp(ctx, nil, option.WithCredentialsFile("serviceAccount.json"))
+	} else {
+		app, _ = firebase.NewApp(ctx, nil)
 	}
 
-	ctx := context.Background()
-	app, err := firebase.NewApp(ctx, nil, opts)
-	if err != nil {
-		log.Fatal(err)
-	}
 	client, err := app.Firestore(ctx)
 	if err != nil {
 		log.Fatal(err)
