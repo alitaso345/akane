@@ -86,6 +86,12 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 	log.Println("Loading webhook function")
 	for _, event := range events {
 		if event.Type == linebot.EventTypeFollow {
+			log.Println("Follow event")
+			log.Println(event.Source.UserID)
+		}
+
+		if event.Type == linebot.EventTypeUnfollow {
+			log.Println("Unfollow event")
 			log.Println(event.Source.UserID)
 		}
 	}

@@ -20,13 +20,3 @@ jobs:
           credentials: ${{ secrets.gcp_credentials }}
           entry_point: HTTPFunction
           env_vars: ENV=production,CONSUMER_KEY=${{ secrets.consumer_key }},CONSUMER_SECRET_KEY=${{ secrets.consumer_secret_key }},ACCESS_TOKEN=${{ secrets.access_token }},ACCESS_TOKEN_SECRET=${{ secrets.access_token_secret }},CHANNEL_SECRET=${{ secrets.channel_secret }},CHANNEL_ACCESS_TOKEN=${{ secrets.channel_access_token }},MY_USER_ID=${{ secrets.my_user_id}}
-      - name: Deploy line bot webhook function
-        id: deploy-line-bot-webhook-function
-        uses: google-github-actions/deploy-cloud-functions@v0.1.0
-        with:
-          name: akane-linebot-webhook-function
-          runtime: go113
-          project: ${{ secrets.gcp_project }}
-          credentials: ${{ secrets.gcp_credentials }}
-          entry_point: LineBotWebhookFunction
-          env_vars: ENV=production,CHANNEL_SECRET=${{ secrets.channel_secret }},CHANNEL_ACCESS_TOKEN=${{ secrets.channel_access_token }}

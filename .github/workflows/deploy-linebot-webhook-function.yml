@@ -1,0 +1,22 @@
+on:
+  push:
+    branches:
+      - master
+name: deploy to cloud function
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Deploy line bot webhook function
+        id: deploy-line-bot-webhook-function
+        uses: google-github-actions/deploy-cloud-functions@v0.1.0
+        with:
+          name: akane-linebot-webhook-function
+          runtime: go113
+          project: ${{ secrets.gcp_project }}
+          credentials: ${{ secrets.gcp_credentials }}
+          entry_point: LineBotWebhookFunction
+          env_vars: ENV=production,CHANNEL_SECRET=${{ secrets.channel_secret }},CHANNEL_ACCESS_TOKEN=${{ secrets.channel_access_token }}
