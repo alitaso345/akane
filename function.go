@@ -63,7 +63,7 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 			}
 			if resp.StatusCode == 200 {
 				for _, tweet := range tweets {
-					if containNoticeText(tweet.Text) && isRecentTweet(tweet) {
+					if containNoticeKeyword(tweet.Text) && !containIgnoreKeyword(tweet.Text) && isRecentTweet(tweet) {
 						text = text + "https://twitter.com/" + tweet.User.ScreenName + "/status/" + strconv.FormatInt(tweet.ID, 10) + "\n\n"
 
 					}
@@ -74,8 +74,12 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 	}
 
 	userIds := getUserIds()
-	for _, id := range userIds {
-		sendLineMessage(id, text)
+	if len(text) > 0 {
+		for _, id := range userIds {
+			sendLineMessage(id, text)
+		}
+	} else {
+		sendLineMessage(os.Getenv("MY_USER_ID"), "本日の配信予告ツイートはありません")
 	}
 }
 
@@ -142,7 +146,7 @@ func LineBotWebhookFunction(w http.ResponseWriter, r *http.Request) {
 
 func getUserIds() []string {
 	// デバッグ用
-	//return []string{os.Getenv("MY_USER_ID")}
+	// return []string{os.Getenv("MY_USER_ID")}
 
 	var userIds []string
 
@@ -205,7 +209,17 @@ func sendLineMessage(userId string, message string) {
 	}
 }
 
-func containNoticeText(text string) bool {
+func containIgnoreKeyword(text string) bool {
+	keywords := []string{"ありがとうございました"}
+	for _, k := range keywords {
+		if strings.Contains(strings.ToLower(text), k) {
+			return true
+		}
+	}
+	return false
+}
+
+func containNoticeKeyword(text string) bool {
 	keywords := []string{"配信", "時から", "分から", "showroom", "youtube", "live", "放送開始", "ニコニコ", "視聴", "ラジオ", "放送"}
 	for _, k := range keywords {
 		if strings.Contains(strings.ToLower(text), k) {
