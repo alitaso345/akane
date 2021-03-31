@@ -44,7 +44,7 @@ func HTTPFunction(_w http.ResponseWriter, _r *http.Request) {
 	httpClient := config.Client(oauth1.NoContext, token)
 
 	client := twitter.NewClient(httpClient)
-	members, resp, err := client.Lists.Members(&twitter.ListsMembersParams{ListID: 1375784169129738240})
+	members, resp, err := client.Lists.Members(&twitter.ListsMembersParams{ListID: 1375784169129738240, Count: 1000})
 	if err != nil {
 		log.Fatalf("Error getting members %v", err)
 	}
@@ -220,7 +220,7 @@ func containIgnoreKeyword(text string) bool {
 }
 
 func containNoticeKeyword(text string) bool {
-	keywords := []string{"配信", "時から", "分から", "showroom", "youtube", "live", "放送開始", "ニコニコ", "視聴", "ラジオ", "放送"}
+	keywords := []string{"配信", "時から", "分から", "showroom", "youtube", "live", "ニコニコ", "視聴", "ラジオ", "放送", "出演情報", "発表"}
 	for _, k := range keywords {
 		if strings.Contains(strings.ToLower(text), k) {
 			return true
