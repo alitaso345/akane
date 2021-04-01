@@ -225,7 +225,7 @@ func containIgnoreKeyword(text string) bool {
 }
 
 func containNoticeKeyword(text string) bool {
-	keywords := []string{"配信", "時から", "分から", "showroom", "youtube", "live", "ニコニコ", "視聴", "ラジオ", "放送", "出演情報", "発表"}
+	keywords := []string{"配信", "時から", "分から", "showroom", "youtube", "live", "ニコニコ", "視聴", "ラジオ", "放送", "出演情報", "重大"}
 	for _, k := range keywords {
 		if strings.Contains(strings.ToLower(text), k) {
 			return true
